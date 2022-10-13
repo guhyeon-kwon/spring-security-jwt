@@ -22,6 +22,8 @@ public class UserServiceImpl implements UserService {
     public User saveUser(User user) {
         log.info("새로운 유저 정보를 DB에 저장했습니다 : ", user.getName());
         user.setPassword(passwordEncoder.encode(user.getPassword()));
+        Role role = roleRepo.findByName("ROLE_USER");
+        user.getRoles().add(role);
         return userRepo.save(user);
     }
 
@@ -31,13 +33,13 @@ public class UserServiceImpl implements UserService {
         return roleRepo.save(role);
     }
 
-    @Override
-    public void addRoleToUser(String username, String roleName) {
-        log.info("사용자 {} 에게 {} 권한을 추가했습니다.", username, roleName);
-        User user = userRepo.findByUsername(username);
-        Role role = roleRepo.findByName(roleName);
-        user.getRoles().add(role);
-    }
+//    @Override
+//    public void addRoleToUser(String username, String roleName) {
+//        log.info("사용자 {} 에게 {} 권한을 추가했습니다.", username, roleName);
+//        User user = userRepo.findByUsername(username);
+//        Role role = roleRepo.findByName(roleName);
+//        user.getRoles().add(role);
+//    }
 
     @Override
     public User getUser(String username) {

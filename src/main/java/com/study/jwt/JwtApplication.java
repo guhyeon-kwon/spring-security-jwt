@@ -9,8 +9,6 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Bean;
 
 import java.util.ArrayList;
-import java.util.Calendar;
-import java.util.Date;
 
 @SpringBootApplication
 public class JwtApplication {
@@ -31,13 +29,6 @@ public class JwtApplication {
             userService.saveUser(new User(null, "Kisun", "kisun", "1234", new ArrayList<>()));
             userService.saveUser(new User(null, "HyeonOuk", "hyok", "1234", new ArrayList<>()));
             userService.saveUser(new User(null, "HanNari", "hnari", "1234", new ArrayList<>()));
-
-            userService.addRoleToUser("ghkwon", "ROLE_USER");
-            userService.addRoleToUser("kisun", "ROLE_MANAGER");
-            userService.addRoleToUser("hyok", "ROLE_ADMIN");
-            userService.addRoleToUser("hnari", "ROLE_SUPER_ADMIN");
-            userService.addRoleToUser("hnari", "ROLE_ADMIN");
-            userService.addRoleToUser("hnari", "ROLE_USER");
 
         };
     }
