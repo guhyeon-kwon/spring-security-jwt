@@ -25,11 +25,6 @@ public class JwtApplication {
             userService.saveRole(new Role(null, "ROLE_ADMIN"));
             userService.saveRole(new Role(null, "ROLE_SUPER_ADMIN"));
 
-            userService.saveUser(new User(null, "GuHyeonKown", "ghkwon", "1234", new ArrayList<>()));
-            userService.saveUser(new User(null, "Kisun", "kisun", "1234", new ArrayList<>()));
-            userService.saveUser(new User(null, "HyeonOuk", "hyok", "1234", new ArrayList<>()));
-            userService.saveUser(new User(null, "HanNari", "hnari", "1234", new ArrayList<>()));
-
         };
     }
 

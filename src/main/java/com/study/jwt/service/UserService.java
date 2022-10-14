@@ -3,6 +3,7 @@ package com.study.jwt.service;
 import com.study.jwt.domain.Role;
 import com.study.jwt.domain.User;
 
+import javax.servlet.http.HttpServletRequest;
 import java.util.List;
 
 public interface UserService {
@@ -16,4 +17,6 @@ public interface UserService {
     User getUser(String username);
     // 모든 유저 정보 가져오기
     List<User> getUsers();
+
+    void deleteUser(String username) throws Exception;
 }

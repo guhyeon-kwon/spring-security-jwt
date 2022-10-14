@@ -1,5 +1,9 @@
 package com.study.jwt.service;
 
+import com.auth0.jwt.JWT;
+import com.auth0.jwt.JWTVerifier;
+import com.auth0.jwt.algorithms.Algorithm;
+import com.auth0.jwt.interfaces.DecodedJWT;
 import com.study.jwt.domain.Role;
 import com.study.jwt.domain.User;
 import com.study.jwt.repo.RoleRepo;
@@ -9,8 +13,11 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import javax.servlet.http.HttpServletRequest;
 import javax.transaction.Transactional;
 import java.util.List;
+
+import static org.springframework.http.HttpHeaders.AUTHORIZATION;
 
 @Service @RequiredArgsConstructor @Transactional @Slf4j
 public class UserServiceImpl implements UserService {
@@ -51,5 +58,11 @@ public class UserServiceImpl implements UserService {
     public List<User> getUsers() {
         log.info("모든 유저 정보를 가져옵니다.");
         return userRepo.findAll();
+    }
+
+    @Override
+    public void deleteUser(String username) {
+        log.info("사용자 {} 를 삭제하였습니다.", username);
+        userRepo.deleteByUsername(username);
     }
 }
