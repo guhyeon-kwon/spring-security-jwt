@@ -63,6 +63,9 @@ public class UserController {
             user.setUsername(signUpForm.getUsername());
             user.setPassword(signUpForm.getPassword());
             user.setName(signUpForm.getName());
+            user.setEmail(signUpForm.getEmail());
+            user.setAddress(signUpForm.getAddress());
+            user.setPhone(signUpForm.getPhone());
             return ResponseEntity.created(uri).body(userService.saveUser(user));
         }
     }
