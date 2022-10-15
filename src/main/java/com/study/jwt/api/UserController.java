@@ -18,6 +18,7 @@ import lombok.RequiredArgsConstructor;
 import org.hibernate.procedure.spi.ParameterRegistrationImplementor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.mail.SimpleMailMessage;
+import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.ui.Model;
 import org.springframework.validation.Errors;
 import org.springframework.web.bind.WebDataBinder;
@@ -49,8 +50,6 @@ public class UserController {
 
     private final SignUpFormValidator signUpFormValidator;
 
-    private final ConsoleMailSender consoleMailSender;
-
     @InitBinder("signUpForm")
     public void initBinder(WebDataBinder webDataBinder){
         webDataBinder.addValidators(signUpFormValidator);
@@ -73,17 +72,18 @@ public class UserController {
                     .build();
             return ResponseEntity.badRequest().body(object);
         } else{
-            ReturnObject object = saveNewUser(signUpForm);
+            User user = saveNewUser(signUpForm);
 
-            SimpleMailMessage mailMessage = new SimpleMailMessage();
-            mailMessage.setSubject("스프링 프로젝트, 회원 가입 인증");
-            mailMessage.setText("/check-email-token?token=");
+            ReturnObject object = ReturnObject.builder()
+                    .msg("ok")
+                    .data(user).build();
+
             return ResponseEntity.created(uri).body(object);
         }
     }
 
     // 유저 생성
-    private ReturnObject saveNewUser(SignUpForm signUpForm) {
+    private User saveNewUser(SignUpForm signUpForm) {
         User user = new User();
         user.setUsername(signUpForm.getUsername());
         user.setPassword(signUpForm.getPassword());
@@ -93,10 +93,7 @@ public class UserController {
         user.setPhone(signUpForm.getPhone());
         user.generateEmailCheckToken();
 
-        ReturnObject object = ReturnObject.builder()
-                .msg("ok")
-                .data(userService.saveUser(user)).build();
-        return object;
+        return userService.saveUser(user);
     }
 
     @PostMapping("/role")
@@ -178,6 +175,7 @@ public class UserController {
         }
     }
 
+    // 인증 메일 확인
     @GetMapping("/check-email-token")
     public ResponseEntity<ReturnObject> checkEmailToken(String token, String email, String username, Model model){
         User user = userService.getUser(username);
@@ -198,6 +196,7 @@ public class UserController {
             return ResponseEntity.badRequest().body(object);
         }
 
+        user.completeSignUp();
         user.setEmailVerified(true);
         user.setJoinedAt(LocalDateTime.now());
         userService.updateUser(user);
