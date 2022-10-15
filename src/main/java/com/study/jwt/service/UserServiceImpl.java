@@ -27,11 +27,17 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public User saveUser(User user) {
-        log.info("새로운 유저 정보를 DB에 저장했습니다 : ", user.getName());
+        log.info("새로운 유저 정보를 DB에 저장했습니다 : ", user.getUsername());
         user.setPassword(passwordEncoder.encode(user.getPassword()));
         Role role = roleRepo.findByName("ROLE_USER");
         user.getRoles().add(role);
         return userRepo.save(user);
+    }
+
+    @Override
+    public void updateUser(User user) {
+        log.info("유저 정보를 수정했습니다 : ", user.getUsername());
+        userRepo.save(user);
     }
 
     @Override

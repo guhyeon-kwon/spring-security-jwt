@@ -8,11 +8,17 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.study.jwt.domain.Role;
 import com.study.jwt.domain.SignUpForm;
 import com.study.jwt.domain.User;
+import com.study.jwt.repo.UserRepo;
 import com.study.jwt.service.UserService;
+import com.study.jwt.utils.ConsoleMailSender;
+import com.study.jwt.utils.ReturnObject;
 import com.study.jwt.utils.SignUpFormValidator;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
+import org.hibernate.procedure.spi.ParameterRegistrationImplementor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.mail.SimpleMailMessage;
+import org.springframework.ui.Model;
 import org.springframework.validation.Errors;
 import org.springframework.web.bind.WebDataBinder;
 import org.springframework.web.bind.annotation.*;
@@ -23,6 +29,7 @@ import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
 import java.io.IOException;
 import java.net.URI;
+import java.time.LocalDateTime;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -42,6 +49,8 @@ public class UserController {
 
     private final SignUpFormValidator signUpFormValidator;
 
+    private final ConsoleMailSender consoleMailSender;
+
     @InitBinder("signUpForm")
     public void initBinder(WebDataBinder webDataBinder){
         webDataBinder.addValidators(signUpFormValidator);
@@ -53,25 +62,44 @@ public class UserController {
     }
 
     // 유저 등록
-    @PostMapping("/user/save")
-    public ResponseEntity<User> saveUser(@RequestBody @Valid SignUpForm signUpForm, Errors errors){
+    @PostMapping("/user")
+    public ResponseEntity<ReturnObject> saveUser(@RequestBody @Valid SignUpForm signUpForm, Errors errors){
         URI uri = URI.create(ServletUriComponentsBuilder.fromCurrentContextPath().path("/api/user/save").toUriString());
         if (errors.hasErrors()) {
             System.out.println("검증실패");
-            return ResponseEntity.badRequest().build();
+            ReturnObject object = ReturnObject.builder()
+                    .msg(errors.getFieldError().getDefaultMessage())
+                    .type(errors.getFieldError().getCode())
+                    .build();
+            return ResponseEntity.badRequest().body(object);
         } else{
-            User user = new User();
-            user.setUsername(signUpForm.getUsername());
-            user.setPassword(signUpForm.getPassword());
-            user.setName(signUpForm.getName());
-            user.setEmail(signUpForm.getEmail());
-            user.setAddress(signUpForm.getAddress());
-            user.setPhone(signUpForm.getPhone());
-            return ResponseEntity.created(uri).body(userService.saveUser(user));
+            ReturnObject object = saveNewUser(signUpForm);
+
+            SimpleMailMessage mailMessage = new SimpleMailMessage();
+            mailMessage.setSubject("스프링 프로젝트, 회원 가입 인증");
+            mailMessage.setText("/check-email-token?token=");
+            return ResponseEntity.created(uri).body(object);
         }
     }
 
-    @PostMapping("/role/save")
+    // 유저 생성
+    private ReturnObject saveNewUser(SignUpForm signUpForm) {
+        User user = new User();
+        user.setUsername(signUpForm.getUsername());
+        user.setPassword(signUpForm.getPassword());
+        user.setName(signUpForm.getName());
+        user.setEmail(signUpForm.getEmail());
+        user.setAddress(signUpForm.getAddress());
+        user.setPhone(signUpForm.getPhone());
+        user.generateEmailCheckToken();
+
+        ReturnObject object = ReturnObject.builder()
+                .msg("ok")
+                .data(userService.saveUser(user)).build();
+        return object;
+    }
+
+    @PostMapping("/role")
     public ResponseEntity<Role> saveRole(@RequestBody Role role){
         URI uri = URI.create(ServletUriComponentsBuilder.fromCurrentContextPath().path("/api/role/save").toUriString());
         return ResponseEntity.created(uri).body(userService.saveRole(role));
@@ -148,6 +176,41 @@ public class UserController {
         } else {
             throw new RuntimeException("요청 처리에 필요한 토큰값이 없습니다.");
         }
+    }
+
+    @GetMapping("/check-email-token")
+    public ResponseEntity<ReturnObject> checkEmailToken(String token, String email, String username, Model model){
+        User user = userService.getUser(username);
+        ReturnObject object;
+        if(user == null){
+            object = ReturnObject.builder()
+                    .type("wrong.username")
+                    .msg("이메일 확인 링크가 정확하지 않습니다.")
+                    .build();
+            return ResponseEntity.badRequest().body(object);
+        }
+
+        if(!user.getEmailCheckToken().equals(token)){
+            object = ReturnObject.builder()
+                    .type("wrong.token")
+                    .msg("이메일 확인 링크가 정확하지 않습니다.")
+                    .build();
+            return ResponseEntity.badRequest().body(object);
+        }
+
+        user.setEmailVerified(true);
+        user.setJoinedAt(LocalDateTime.now());
+        userService.updateUser(user);
+
+        model.addAttribute("username", username);
+
+        object = ReturnObject.builder()
+                .msg("ok")
+                .data(model)
+                .build();
+
+        return ResponseEntity.ok().body(object);
+
     }
 
 }
