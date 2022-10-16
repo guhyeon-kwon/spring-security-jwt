@@ -16,7 +16,7 @@ import static javax.persistence.GenerationType.AUTO;
 public class User {
     @Id @GeneratedValue(strategy = AUTO)
     private Long id;
-    private String name;
+    private String name; // 닉네임
     private String username;
     private String password;
     @ManyToMany(fetch = FetchType.EAGER)
@@ -49,6 +49,10 @@ public class User {
 
     public boolean canSendConfirmEmail() {
         return this.emailCheckTokenGeneratedAt.isBefore(LocalDateTime.now().minusHours(1));
+    }
+
+    public boolean getEmailVerified(){
+        return this.emailVerified;
     }
 
 

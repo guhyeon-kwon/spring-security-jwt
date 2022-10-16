@@ -3,6 +3,7 @@ package com.study.jwt.filter;
 import com.auth0.jwt.JWT;
 import com.auth0.jwt.algorithms.Algorithm;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.study.jwt.service.UserService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -31,7 +32,6 @@ public class CustomAuthenticationFilter extends UsernamePasswordAuthenticationFi
     // 유저 인증을 담당할 인터페이스
     private final AuthenticationManager authenticationManager;
 
-
     // 원하는 시점에서 로그인 하기위해 authenticationManager를 외부에서 주입받음
     public CustomAuthenticationFilter(AuthenticationManager authenticationManager){
         this.authenticationManager = authenticationManager;
@@ -44,8 +44,10 @@ public class CustomAuthenticationFilter extends UsernamePasswordAuthenticationFi
         String password = request.getParameter("password");
         log.info("Username is : {}", username);
         log.info("Password is : {}", password);
+
         // 요청에서 받아온 유저 정보로 토큰 발급
         UsernamePasswordAuthenticationToken authenticationToken = new UsernamePasswordAuthenticationToken(username, password);
+
         // 토큰으로 인증 수행하고 결과 반환
         return authenticationManager.authenticate(authenticationToken);
     }
