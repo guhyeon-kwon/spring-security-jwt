@@ -1,9 +1,8 @@
 package com.study.jwt.service;
 
-import com.study.jwt.domain.Role;
-import com.study.jwt.domain.User;
+import com.study.jwt.maria.domain.Role;
+import com.study.jwt.maria.domain.User;
 
-import javax.servlet.http.HttpServletRequest;
 import java.util.List;
 
 public interface UserService {

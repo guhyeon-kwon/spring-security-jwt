@@ -1,7 +1,7 @@
 package com.study.jwt.service;
 
-import com.study.jwt.domain.User;
-import com.study.jwt.repo.UserRepo;
+import com.study.jwt.maria.domain.User;
+import com.study.jwt.maria.repo.UserRepo;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;

@@ -5,9 +5,10 @@ import com.auth0.jwt.JWTVerifier;
 import com.auth0.jwt.algorithms.Algorithm;
 import com.auth0.jwt.interfaces.DecodedJWT;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.study.jwt.domain.Role;
-import com.study.jwt.domain.SignUpForm;
-import com.study.jwt.domain.User;
+import com.study.jwt.maria.domain.Role;
+import com.study.jwt.maria.domain.SignUpForm;
+import com.study.jwt.maria.domain.User;
+import com.study.jwt.service.SMSService;
 import com.study.jwt.service.UserService;
 import com.study.jwt.utils.ReturnObject;
 import com.study.jwt.utils.SignUpFormValidator;
@@ -42,21 +43,23 @@ import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 public class UserController {
     private final UserService userService;
 
+    private final SMSService smsService;
+
     private final SignUpFormValidator signUpFormValidator;
 
     @InitBinder("signUpForm")
-    public void initBinder(WebDataBinder webDataBinder){
+    public void initBinder(WebDataBinder webDataBinder) {
         webDataBinder.addValidators(signUpFormValidator);
     }
 
     @GetMapping("/users")
-    public ResponseEntity<List<User>> getUsers(){
+    public ResponseEntity<List<User>> getUsers() {
         return ResponseEntity.ok().body(userService.getUsers());
     }
 
     // 유저 등록
     @PostMapping("/user")
-    public ResponseEntity<ReturnObject> saveUser(@RequestBody @Valid SignUpForm signUpForm, Errors errors){
+    public ResponseEntity<ReturnObject> saveUser(@RequestBody @Valid SignUpForm signUpForm, Errors errors) {
         URI uri = URI.create(ServletUriComponentsBuilder.fromCurrentContextPath().path("/api/user/save").toUriString());
         if (errors.hasErrors()) {
             System.out.println("검증실패");
@@ -65,7 +68,7 @@ public class UserController {
                     .type(errors.getFieldError().getCode())
                     .build();
             return ResponseEntity.badRequest().body(object);
-        } else{
+        } else {
             User user = saveNewUser(signUpForm);
 
             ReturnObject object = ReturnObject.builder()
@@ -85,13 +88,13 @@ public class UserController {
         user.setEmail(signUpForm.getEmail());
         user.setAddress(signUpForm.getAddress());
         user.setPhone(signUpForm.getPhone());
-        user.generateEmailCheckToken();
+        user.setSmsVerified(false);
 
         return userService.saveUser(user);
     }
 
     @PostMapping("/role")
-    public ResponseEntity<Role> saveRole(@RequestBody Role role){
+    public ResponseEntity<Role> saveRole(@RequestBody Role role) {
         URI uri = URI.create(ServletUriComponentsBuilder.fromCurrentContextPath().path("/api/role/save").toUriString());
         return ResponseEntity.created(uri).body(userService.saveRole(role));
     }
@@ -100,7 +103,7 @@ public class UserController {
     @GetMapping("/token/refresh")
     public void refreshToken(HttpServletRequest request, HttpServletResponse response) throws Exception {
         String authorizationHeader = request.getHeader(AUTHORIZATION);
-        if(authorizationHeader != null && authorizationHeader.startsWith("Bearer ")){
+        if (authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
             try {
                 // 토크만 추출 하도록 type부분 제거
                 String refresh_token = authorizationHeader.substring("Bearer ".length());
@@ -148,7 +151,7 @@ public class UserController {
     @DeleteMapping("/user")
     public void deleteUser(HttpServletRequest request, HttpServletResponse response) throws Exception {
         String authorizationHeader = request.getHeader(AUTHORIZATION);
-        if(authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
+        if (authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
             try {
                 String token = authorizationHeader.substring("Bearer ".length());
                 Algorithm algorithm = Algorithm.HMAC256("secret".getBytes());
@@ -156,7 +159,7 @@ public class UserController {
                 DecodedJWT decodedJWT = verifier.verify(token);
                 String username = decodedJWT.getSubject();
                 userService.deleteUser(username);
-            } catch (Exception e){
+            } catch (Exception e) {
                 response.setHeader("error", e.getMessage());
                 response.setStatus(FORBIDDEN.value());
                 Map<String, String> error = new HashMap<>();
@@ -169,29 +172,29 @@ public class UserController {
         }
     }
 
-    // 인증 메일 확인
-    @GetMapping("/check-email-token")
-    public ResponseEntity<ReturnObject> checkEmailToken(String token, String email, String username, Model model){
+
+    @GetMapping("/check-sms-code")
+    public ResponseEntity<ReturnObject> checkEmailToken(String username, String phone, String code, Model model) {
         User user = userService.getUser(username);
         ReturnObject object;
-        if(user == null){
+
+        if (user == null) {
             object = ReturnObject.builder()
                     .type("wrong.username")
-                    .msg("이메일 확인 링크가 정확하지 않습니다.")
+                    .msg("유저 정보가 존재하지 않습니다.")
                     .build();
             return ResponseEntity.badRequest().body(object);
         }
 
-        if(!user.getEmailCheckToken().equals(token)){
+        if (!smsService.checkCertifySMS(phone, code)) {
             object = ReturnObject.builder()
-                    .type("wrong.token")
-                    .msg("이메일 확인 링크가 정확하지 않습니다.")
+                    .type("wrong.code")
+                    .msg("인증 코드가 틀립니다.")
                     .build();
             return ResponseEntity.badRequest().body(object);
         }
 
         user.completeSignUp();
-        user.setEmailVerified(true);
         user.setJoinedAt(LocalDateTime.now());
         userService.updateUser(user);
 
@@ -203,8 +206,45 @@ public class UserController {
                 .build();
 
         return ResponseEntity.ok().body(object);
-
     }
+
+
+    // 인증 메일 확인
+//    @GetMapping("/check-email-token")
+//    public ResponseEntity<ReturnObject> checkEmailToken(String token, String email, String username, Model model){
+//        User user = userService.getUser(username);
+//        ReturnObject object;
+//        if(user == null){
+//            object = ReturnObject.builder()
+//                    .type("wrong.username")
+//                    .msg("이메일 확인 링크가 정확하지 않습니다.")
+//                    .build();
+//            return ResponseEntity.badRequest().body(object);
+//        }
+//
+//        if(!user.getEmailCheckToken().equals(token)){
+//            object = ReturnObject.builder()
+//                    .type("wrong.token")
+//                    .msg("이메일 확인 링크가 정확하지 않습니다.")
+//                    .build();
+//            return ResponseEntity.badRequest().body(object);
+//        }
+//
+//        user.completeSignUp();
+//        user.setEmailVerified(true);
+//        user.setJoinedAt(LocalDateTime.now());
+//        userService.updateUser(user);
+//
+//        model.addAttribute("username", username);
+//
+//        object = ReturnObject.builder()
+//                .msg("ok")
+//                .data(model)
+//                .build();
+//
+//        return ResponseEntity.ok().body(object);
+//
+//    }
 
 }
 

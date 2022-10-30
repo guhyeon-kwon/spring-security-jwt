@@ -1,4 +1,4 @@
-package com.study.jwt.domain;
+package com.study.jwt.maria.domain;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;

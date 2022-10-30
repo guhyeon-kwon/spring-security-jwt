@@ -1,7 +1,7 @@
 package com.study.jwt.utils;
 
-import com.study.jwt.domain.SignUpForm;
-import com.study.jwt.repo.UserRepo;
+import com.study.jwt.maria.domain.SignUpForm;
+import com.study.jwt.maria.repo.UserRepo;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import org.springframework.validation.Errors;

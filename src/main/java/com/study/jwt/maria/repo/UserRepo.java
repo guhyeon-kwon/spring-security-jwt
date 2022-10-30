@@ -1,6 +1,6 @@
-package com.study.jwt.repo;
+package com.study.jwt.maria.repo;
 
-import com.study.jwt.domain.User;
+import com.study.jwt.maria.domain.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.transaction.annotation.Transactional;
 
