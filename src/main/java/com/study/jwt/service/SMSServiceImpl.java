@@ -27,13 +27,13 @@ public class SMSServiceImpl implements SMSService {
     String to_phone = "01057444274";
 
     @Override
-    public void sendCertifySMS(String from_phone, String certify_code) {
-        UserSMS userSMS = UserSMS.builder().phone(from_phone).code(certify_code).purpose("regis").build();
+    public void sendCertifySMS(UserSMS obj) {
+        UserSMS userSMS = UserSMS.builder().phone(obj.getPhone()).code(obj.getCode()).purpose(obj.getPurpose()).build();
 
-        String message = String.format("[Spring] 인증번호 %s 를 입력하세요.", certify_code);
+        String message = String.format("[Spring] 인증번호 %s 를 입력하세요.", obj.getCode());
 
         try {
-            sendSMS(from_phone, message);
+            sendSMS(obj.getPhone(), message);
         } catch (CoolsmsException e) {
             log.error(e.getMessage());
             log.error(String.valueOf(e.getCode()));
@@ -47,13 +47,13 @@ public class SMSServiceImpl implements SMSService {
     }
 
     @Override
-    public boolean checkCertifySMS(String phone, String certify_code, String purpose) {
-        Optional<UserSMS> user = userSMSRepo.findByPhoneAndPurpose(phone, purpose);
+    public boolean checkCertifySMS(UserSMS obj) {
+        Optional<UserSMS> user = userSMSRepo.findByPhoneAndPurpose(obj.getPhone(), obj.getPurpose());
         if (user.isEmpty()) {
             return false;
         }
         UserSMS userSMS = user.get();
-        if (!userSMS.getCode().equals(certify_code)) {
+        if (!userSMS.getCode().equals(obj.getCode())) {
             return false;
         }
         return true;

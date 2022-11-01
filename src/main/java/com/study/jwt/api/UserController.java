@@ -8,6 +8,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.study.jwt.maria.domain.Role;
 import com.study.jwt.maria.domain.SignUpForm;
 import com.study.jwt.maria.domain.User;
+import com.study.jwt.redis.domain.UserSMS;
 import com.study.jwt.service.SMSService;
 import com.study.jwt.service.UserService;
 import com.study.jwt.utils.ReturnObject;
@@ -179,6 +180,8 @@ public class UserController {
         User user = userService.getUser(username);
         ReturnObject object;
 
+        UserSMS userSMS = UserSMS.builder().phone(phone).code(code).purpose("regis").build();
+
         if (user == null) {
             object = ReturnObject.builder()
                     .type("wrong.username")
@@ -187,7 +190,7 @@ public class UserController {
             return ResponseEntity.badRequest().body(object);
         }
 
-        if (!smsService.checkCertifySMS(phone, code, "regis")) {
+        if (!smsService.checkCertifySMS(userSMS)) {
             object = ReturnObject.builder()
                     .type("wrong.code")
                     .msg("인증 코드가 틀립니다.")

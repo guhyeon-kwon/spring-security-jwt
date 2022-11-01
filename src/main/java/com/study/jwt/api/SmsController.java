@@ -32,8 +32,8 @@ public class SmsController {
     public ResponseEntity<ReturnObject> certifyUser(@RequestBody UserSMS userSMS, Errors errors){
         URI uri = URI.create(ServletUriComponentsBuilder.fromCurrentContextPath().path("/sms/certify-regis").toUriString());
         String code = getRandomNumber(4);
-        service.sendCertifySMS(userSMS.getPhone(), code);
         userSMS.setCode(code);
+        service.sendCertifySMS(userSMS);
         ReturnObject object = ReturnObject.builder()
                 .msg("ok")
                 .data(userSMS).build();
