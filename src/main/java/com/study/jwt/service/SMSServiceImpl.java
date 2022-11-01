@@ -28,30 +28,27 @@ public class SMSServiceImpl implements SMSService {
 
     @Override
     public void sendCertifySMS(String from_phone, String certify_code) {
-        Message coolsms = new Message(api_key, api_secret);
+        UserSMS userSMS = UserSMS.builder().phone(from_phone).code(certify_code).purpose("regis").build();
 
-        // send
-        HashMap<String, String> params = new HashMap<String, String>();
-        params.put("to", to_phone); // 수신번호
-        params.put("from", from_phone); // 발신번호
-        params.put("type", "SMS"); // Message type ( SMS, LMS, MMS, ATA )
-        params.put("text", String.format("[Spring] 인증번호 %s 를 입력하세요.", certify_code)); // 문자내용
-        params.put("mode", "test");
-
-        UserSMS userSMS = UserSMS.builder().phone(from_phone).code(certify_code).build();
+        String message = String.format("[Spring] 인증번호 %s 를 입력하세요.", certify_code);
 
         try {
-//            JSONObject obj = (JSONObject) coolsms.send(params);
-//            System.out.println(obj.toString());
+            sendSMS(from_phone, message);
+        } catch (CoolsmsException e) {
+            log.error(e.getMessage());
+            log.error(String.valueOf(e.getCode()));
+        }
+
+        try {
             userSMSRepo.save(userSMS);
         } catch (Exception e) {
-            e.getMessage();
+            log.error(e.getMessage());
         }
     }
 
     @Override
-    public boolean checkCertifySMS(String phone, String certify_code) {
-        Optional<UserSMS> user = userSMSRepo.findByPhone(phone);
+    public boolean checkCertifySMS(String phone, String certify_code, String purpose) {
+        Optional<UserSMS> user = userSMSRepo.findByPhoneAndPurpose(phone, purpose);
         if (user.isEmpty()) {
             return false;
         }
@@ -65,5 +62,24 @@ public class SMSServiceImpl implements SMSService {
     @Override
     public List<UserSMS> findAllUserSMS() {
         return (List<UserSMS>) userSMSRepo.findAll();
+    }
+
+
+
+    // 문자 전송
+    private JSONObject sendSMS(String from_phone, String message) throws CoolsmsException {
+        Message coolsms = new Message(api_key, api_secret);
+
+        // send
+        HashMap<String, String> params = new HashMap<String, String>();
+        params.put("to", to_phone); // 수신번호
+        params.put("from", from_phone); // 발신번호
+        params.put("type", "SMS"); // Message type ( SMS, LMS, MMS, ATA )
+        params.put("text", message); // 문자내용
+        params.put("mode", "test");
+
+//        JSONObject obj = (JSONObject) coolsms.send(params);
+
+        return new JSONObject();
     }
 }

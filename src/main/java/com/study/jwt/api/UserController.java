@@ -173,8 +173,9 @@ public class UserController {
     }
 
 
+    // 회원가입 SMS 인증
     @GetMapping("/check-sms-code")
-    public ResponseEntity<ReturnObject> checkEmailToken(String username, String phone, String code, Model model) {
+    public ResponseEntity<ReturnObject> checkSMSCode(String username, String phone, String code, Model model) {
         User user = userService.getUser(username);
         ReturnObject object;
 
@@ -186,7 +187,7 @@ public class UserController {
             return ResponseEntity.badRequest().body(object);
         }
 
-        if (!smsService.checkCertifySMS(phone, code)) {
+        if (!smsService.checkCertifySMS(phone, code, "regis")) {
             object = ReturnObject.builder()
                     .type("wrong.code")
                     .msg("인증 코드가 틀립니다.")
@@ -207,6 +208,42 @@ public class UserController {
 
         return ResponseEntity.ok().body(object);
     }
+
+    // 아이디 찾기 SMS 인증
+//    @GetMapping("/check-sms-code-username")
+//    public ResponseEntity<ReturnObject> findUsernameSMS(String username, String phone, String code, Model model) {
+//        User user = userService.getUser(username);
+//        ReturnObject object;
+//
+//        if (user == null) {
+//            object = ReturnObject.builder()
+//                    .type("wrong.username")
+//                    .msg("유저 정보가 존재하지 않습니다.")
+//                    .build();
+//            return ResponseEntity.badRequest().body(object);
+//        }
+//
+//        if (!smsService.checkCertifySMS(phone, code)) {
+//            object = ReturnObject.builder()
+//                    .type("wrong.code")
+//                    .msg("인증 코드가 틀립니다.")
+//                    .build();
+//            return ResponseEntity.badRequest().body(object);
+//        }
+//
+//        user.completeSignUp();
+//        user.setJoinedAt(LocalDateTime.now());
+//        userService.updateUser(user);
+//
+//        model.addAttribute("username", username);
+//
+//        object = ReturnObject.builder()
+//                .msg("ok")
+//                .data(model)
+//                .build();
+//
+//        return ResponseEntity.ok().body(object);
+//    }
 
 
     // 인증 메일 확인

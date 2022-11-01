@@ -6,5 +6,5 @@ import org.springframework.data.repository.CrudRepository;
 import java.util.Optional;
 
 public interface UserSMSRepo extends CrudRepository<UserSMS, String> {
-    Optional<UserSMS> findByPhone(String phone);
+    Optional<UserSMS> findByPhoneAndPurpose(String phone, String purpose);
 }

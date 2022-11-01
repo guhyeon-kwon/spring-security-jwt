@@ -20,4 +20,8 @@ public class UserSMS {
     private String phone;
 
     private String code;
+
+    // 용도 ex) 회원가입, 비밀번호 찾기, 아이디 찾기
+    @Indexed
+    private String purpose;
 }
