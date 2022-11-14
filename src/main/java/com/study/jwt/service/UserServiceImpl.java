@@ -1,5 +1,6 @@
 package com.study.jwt.service;
 
+import com.study.jwt.mail.EmailMessage;
 import com.study.jwt.maria.domain.Role;
 import com.study.jwt.maria.domain.User;
 import com.study.jwt.mail.EmailService;
@@ -10,6 +11,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.thymeleaf.TemplateEngine;
+import org.thymeleaf.context.Context;
 
 import javax.transaction.Transactional;
 import java.util.List;
@@ -62,24 +64,4 @@ public class UserServiceImpl implements UserService {
         log.info("사용자 {} 를 삭제하였습니다.", username);
         userRepo.deleteByUsername(username);
     }
-
-//    private void sendSignUpConfirmEmail(User user) {
-//
-//        Context context = new Context();
-////        context.setVariable("link", "/api/check-email-token?token=" + user.getEmailCheckToken() +
-////                "&username=" + user.getUsername());
-//        context.setVariable("username", user.getUsername());
-//        context.setVariable("linkName", "이메일 인증하기");
-//        context.setVariable("message", "버튼을 클릭하시면 이메일 인증 및 회원가입이 완료됩니다.");
-//        context.setVariable("host", "http://localhost:8080");
-//        String message = templateEngine.process("mail/simple-link", context);
-//
-//        EmailMessage emailMessage = EmailMessage.builder()
-//                .to(user.getEmail())
-//                .subject("스프링 프로젝트, 회원 가입 인증")
-//                .message(message)
-//                .build();
-//
-//        emailService.sendEmail(emailMessage);
-//    }
 }

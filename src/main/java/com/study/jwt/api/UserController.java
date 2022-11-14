@@ -5,15 +5,14 @@ import com.auth0.jwt.JWTVerifier;
 import com.auth0.jwt.algorithms.Algorithm;
 import com.auth0.jwt.interfaces.DecodedJWT;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.study.jwt.mail.EmailService;
 import com.study.jwt.maria.domain.Role;
 import com.study.jwt.maria.domain.SignUpForm;
 import com.study.jwt.maria.domain.User;
-import com.study.jwt.redis.domain.UserSMS;
-import com.study.jwt.service.SMSService;
+import com.study.jwt.redis.domain.UserEmail;
 import com.study.jwt.service.UserService;
 import com.study.jwt.utils.ReturnObject;
 import com.study.jwt.utils.SignUpFormValidator;
-import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.ui.Model;
@@ -44,7 +43,7 @@ import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 public class UserController {
     private final UserService userService;
 
-    private final SMSService smsService;
+    private final EmailService emailService;
 
     private final SignUpFormValidator signUpFormValidator;
 
@@ -85,11 +84,9 @@ public class UserController {
         User user = new User();
         user.setUsername(signUpForm.getUsername());
         user.setPassword(signUpForm.getPassword());
-        user.setName(signUpForm.getName());
+        user.setName(signUpForm.getNickname());
         user.setEmail(signUpForm.getEmail());
-        user.setAddress(signUpForm.getAddress());
-        user.setPhone(signUpForm.getPhone());
-        user.setSmsVerified(false);
+        user.setEmailVerified(false);
 
         return userService.saveUser(user);
     }
@@ -173,24 +170,22 @@ public class UserController {
         }
     }
 
-
-    // 회원가입 SMS 인증
-    @GetMapping("/check-sms-code")
-    public ResponseEntity<ReturnObject> checkSMSCode(String username, String phone, String code, Model model) {
+    // 인증 메일 확인
+    @GetMapping("/check-email-code")
+    public ResponseEntity<ReturnObject> checkEmailCode(String code, String email, String username, Model model){
         User user = userService.getUser(username);
         ReturnObject object;
-
-        UserSMS userSMS = UserSMS.builder().phone(phone).code(code).purpose("regis").build();
-
-        if (user == null) {
+        if(user == null){
             object = ReturnObject.builder()
                     .type("wrong.username")
-                    .msg("유저 정보가 존재하지 않습니다.")
+                    .msg("이메일 확인 링크가 정확하지 않습니다.")
                     .build();
             return ResponseEntity.badRequest().body(object);
         }
 
-        if (!smsService.checkCertifySMS(userSMS)) {
+        UserEmail userEmail = UserEmail.builder().email(email).code(code).build();
+
+        if (!emailService.checkCertifyEmail(userEmail)) {
             object = ReturnObject.builder()
                     .type("wrong.code")
                     .msg("인증 코드가 틀립니다.")
@@ -210,87 +205,7 @@ public class UserController {
                 .build();
 
         return ResponseEntity.ok().body(object);
+
     }
 
-    // 아이디 찾기 SMS 인증
-//    @GetMapping("/check-sms-code-username")
-//    public ResponseEntity<ReturnObject> findUsernameSMS(String username, String phone, String code, Model model) {
-//        User user = userService.getUser(username);
-//        ReturnObject object;
-//
-//        if (user == null) {
-//            object = ReturnObject.builder()
-//                    .type("wrong.username")
-//                    .msg("유저 정보가 존재하지 않습니다.")
-//                    .build();
-//            return ResponseEntity.badRequest().body(object);
-//        }
-//
-//        if (!smsService.checkCertifySMS(phone, code)) {
-//            object = ReturnObject.builder()
-//                    .type("wrong.code")
-//                    .msg("인증 코드가 틀립니다.")
-//                    .build();
-//            return ResponseEntity.badRequest().body(object);
-//        }
-//
-//        user.completeSignUp();
-//        user.setJoinedAt(LocalDateTime.now());
-//        userService.updateUser(user);
-//
-//        model.addAttribute("username", username);
-//
-//        object = ReturnObject.builder()
-//                .msg("ok")
-//                .data(model)
-//                .build();
-//
-//        return ResponseEntity.ok().body(object);
-//    }
-
-
-    // 인증 메일 확인
-//    @GetMapping("/check-email-token")
-//    public ResponseEntity<ReturnObject> checkEmailToken(String token, String email, String username, Model model){
-//        User user = userService.getUser(username);
-//        ReturnObject object;
-//        if(user == null){
-//            object = ReturnObject.builder()
-//                    .type("wrong.username")
-//                    .msg("이메일 확인 링크가 정확하지 않습니다.")
-//                    .build();
-//            return ResponseEntity.badRequest().body(object);
-//        }
-//
-//        if(!user.getEmailCheckToken().equals(token)){
-//            object = ReturnObject.builder()
-//                    .type("wrong.token")
-//                    .msg("이메일 확인 링크가 정확하지 않습니다.")
-//                    .build();
-//            return ResponseEntity.badRequest().body(object);
-//        }
-//
-//        user.completeSignUp();
-//        user.setEmailVerified(true);
-//        user.setJoinedAt(LocalDateTime.now());
-//        userService.updateUser(user);
-//
-//        model.addAttribute("username", username);
-//
-//        object = ReturnObject.builder()
-//                .msg("ok")
-//                .data(model)
-//                .build();
-//
-//        return ResponseEntity.ok().body(object);
-//
-//    }
-
-}
-
-
-@Data
-class RoleToUserForm {
-    private String username;
-    private String roleName;
 }

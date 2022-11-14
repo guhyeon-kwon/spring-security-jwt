@@ -1,3 +1,9 @@
+environments:
+  dev:
+    url: http://localhost:8080
+  product:
+    url: http://localhost:8080
+
 spring:
   profiles:
     active: dev

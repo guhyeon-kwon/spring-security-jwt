@@ -21,14 +21,12 @@ public class User {
     @ManyToMany(fetch = FetchType.EAGER)
     private Collection<Role> roles = new ArrayList<>();
     private String email;
-    private String address;
-    private String phone;
-    private boolean smsVerified; // 문자 인증 여부
+    private boolean emailVerified; // 이메일 인증 여부
     private LocalDateTime joinedAt; // 로그인한 시간
 
     // 회원가입 완료 처리
     public void completeSignUp() {
-        this.smsVerified = true;
+        this.emailVerified = true;
         this.joinedAt = LocalDateTime.now();
     }
 }

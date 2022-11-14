@@ -1,15 +1,17 @@
 package com.study.jwt.mail;
 
+import com.study.jwt.redis.domain.UserEmail;
+import com.study.jwt.redis.repo.UserEmailRepo;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Component;
-import org.thymeleaf.context.Context;
 
 import javax.mail.MessagingException;
 import javax.mail.internet.MimeMessage;
+import java.util.Optional;
 
 
 // 실제로 인증 메일 발송
@@ -21,8 +23,12 @@ public class HtmlEmailService implements EmailService{
 
     private final JavaMailSender javaMailSender;
 
+    private final UserEmailRepo userEmailRepo;
+
     @Override
     public void sendEmail(EmailMessage emailMessage) {
+        UserEmail userEmail = UserEmail.builder().email(emailMessage.getTo()).code(emailMessage.getCode()).build();
+
         MimeMessage message = javaMailSender.createMimeMessage();
         try {
             MimeMessageHelper mimeMessageHelper = new MimeMessageHelper(message, true, "UTF-8");
@@ -34,5 +40,24 @@ public class HtmlEmailService implements EmailService{
         } catch (MessagingException e) {
             log.error("failed to send email : ", e);
         }
+
+        try {
+            userEmailRepo.save(userEmail);
+        } catch (Exception e) {
+            log.error(e.getMessage());
+        }
+    }
+
+    @Override
+    public boolean checkCertifyEmail(UserEmail obj) {
+        Optional<UserEmail> user = userEmailRepo.findByEmail(obj.getEmail());
+        if (user.isEmpty()) {
+            return false;
+        }
+        UserEmail userEmail = user.get();
+        if (!userEmail.getCode().equals(obj.getCode())) {
+            return false;
+        }
+        return true;
     }
 }

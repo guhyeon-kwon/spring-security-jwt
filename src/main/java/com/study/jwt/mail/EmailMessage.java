@@ -13,4 +13,6 @@ public class EmailMessage {
 
     private String message; // 내용
 
+    private String code;
+
 }
